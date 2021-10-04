@@ -1,0 +1,14 @@
+{
+  "name": "pg-todo-tutorial",
+  "version": "0.0.1",
+  "description": "Postgraphile TODO Tutorial",
+  "main": "index.js",
+  "repository": "https://github.com/dkkloimwieder/pg-todo-tutorial",
+  "author": "d kloimwieder <dkkloimwieder@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "db-migrate": "^1.0.0-beta.16",
+    "db-migrate-pg": "^1.2.2",
+    "dotenv": "^10.0.0"
+  }
+}

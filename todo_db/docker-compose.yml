@@ -1,0 +1,14 @@
+# docker-compose.yml
+
+version: "3.8"
+services:
+  postgres:
+    image: "postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - todovolume:/var/lib/postgresql/data/
+    env_file:
+      - ../.env
+volumes:
+  todovolume:
