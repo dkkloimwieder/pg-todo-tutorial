@@ -160,7 +160,7 @@ This will create a new table named `todo` on our `todo_public` schema with an `i
 `migrations/sqls/#############-create-todo-table-down`:
 
 ```sql
-DROP TABLE organize.todo;
+DROP TABLE todo_public.todo;
 ```
 
 The down migrations simply drops the table.
