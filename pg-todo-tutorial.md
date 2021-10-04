@@ -24,7 +24,7 @@ This project requires a basic working knowledge of [Git][git], [Node][node], and
 
 ## Create a Postgres instance
 
-This section begins with the `setup` branch of the repo: `git checkout setup`
+This section begins with the `section-1` branch and includes a little directory structure, a `.env`, `database.json`, and a `docker-config.yml`. Let's begin: `git checkout section-1`
 
 >Note: In the root directory of the project first please have a look at the provided `.env` file.  Please note that typically `.env` would ==**never**== be included in a public git repository. Its purpose is to provide a central place for environemtal variables which may or may not be super secret stuff like passwords or connection settings. Please make sure to add `.env` to your local .gitignore before proceeding: ` echo '.env' >> .gitignore `
 
@@ -39,46 +39,56 @@ Let's take a look at the `.env`. The first three lines will be used by docker-co
 The two additional lines will be used by `db-migrate`, `postgraphile`, and `express` and will correspond to the port and host of our soon to be running dockerized postgres instance:
 
 ```.env
-  POSTGRES_PORT:5432
+  POSTGRES_PORT=5432
   POSTGRES_HOST=127.0.0.1
 ```
 
-Next lets take a look at out `docker-compose.yml`
+Next lets take a look at out `todo_db/docker-compose.yml`
 
 ```yml
-  version: "3"
+  version: "3.8"
   services:
     postgres:
       image: "postgres"
-      deploy:
-        mode: global
       ports:
         - "5432:5432"
       volumes:
         - todovolume:/var/lib/postgresql/data/
       env_file:
-        - .env
+        - ../.env
   volumes:
     todovolume:
 ```
 
-This file is responsible for the configuration of `docker-compose`. It specifies that we will use the officia `postgres` docker image and deploy it in `global` mode which will limit the number of available instances to one. `ports` specifies the exposed external port followed by the internal port postgres is using. Specifying `volumes` allows us to persist out database data. The volume will be created the first time that the container is brought up. `env_file` allows us to centralize(for the most part) our environment details. Refer to the [official][docker-compose] documentation if you would like to know more about the structure and specifics of `docker-compose.yml`.
+This file is responsible for the configuration of `docker-compose`. It specifies that we will use the official `postgres` docker image. `ports` specifies the exposed external port followed by the internal port postgres is using. Specifying `volumes` allows us to persist out database data. The volume will be created the first time that the container is brought up. `env_file` allows us to centralize(for the most part) our environment details. Refer to the [official][docker-compose] documentation if you would like to know more about the structure and specifics of `docker-compose.yml`.
 
 Now lets spin up postgres!
 
 ```sh
-docker-compose up 
+docker-compose up -d
 ```
 
-You are at this point greeted with some output indicating success. `^C` (ctl/cmd c) will stop the running container.
+You are at this point greeted with some output indicating success. The `-d` flag simply detatches the process from the terminal so that we can continue to use it.
 
 ## Migrations
 
-At this point we need a way to manage the modifications we make to postgres. In the database world these modifications are commonly known as migrations. There are many tools that are great at doing this job and a variety of languages that are used to script migrations including javascript, ruby, and go. Despite the availability of tools which allow us to use other languages, we will opt for using raw SQL and the very simple [db-migrate][db-migrate] available through npm. Using SQL to modify a postgres database is infinitely more documented than other methods, which for our purposes (education) makes life a little easier. We will `yarn global add db-migrate` and then `yarn add db-migrate db-migrate-pg dotenv` Why do we need `db-migrate` available globally? It is recommended as the method for install by the official documentation as it is primarily used on the command line. It will find the local install when running globally and in fact use it so there are no worries about project specific versioning.
+At this point we need a way to manage the modifications we make to postgres. In the database world these modifications are commonly known as migrations. There are many tools that are great at doing this job and a variety of languages that are used to script migrations including javascript, ruby, and go. Despite the availability of tools which allow us to use other languages, we will opt for using raw SQL and the very simple [db-migrate][db-migrate] available through npm. Using SQL to modify a postgres database is infinitely more documented than other methods, which for our purposes (education) makes life a little easier. We will make sure we are in the root project directory (`pg-todo-tutorial`) and:
+
+```sh
+yarn install
+```
+
+This will install `db-migrate`, `db-migrate-pg`, and `dotenv`. Then we will:
+
+```sh
+yarn global add db-migrate
+```
+
+Why do we need `db-migrate`available globally? It is recommended as the method for install by the official documentation as it is primarily used on the command line. It will find the local install when running globally and in fact use it so there are no worries about project specific versioning.
 
 [db-migrate]:<https://db-migrate.readthedocs.io/en/latest/>
 
-Next we need to create `.db-migraterc` with the following contents:
+Next lets look at `.db-migraterc`:
 
 ```.rc
   {
@@ -87,9 +97,24 @@ Next we need to create `.db-migraterc` with the following contents:
 ```
 
 This allows us to avoid specifying the type of migration that we will generate via command line argument.
-In leiu of a databse.json that is typically used to configure `db-migrate` we have installed dotenv and `db-migrate` will automatically use the environmental variables in `.env` that we have already defined to connect to postgres.
+Now lets take a look at `database.json`:
 
-So lets create a migration!
+```json
+{
+  "dev": {
+    "driver": "pg",
+    "user": {"ENV": "POSTGRES_USER"},
+    "password": {"ENV": "POSTGRES_PASSWORD"},
+    "host": {"ENV": "POSTGRES_HOST"},
+    "database": {"ENV": "POSTGRES_DB"},
+    "port": {"ENV": "POSTGRES_PORT"}
+  }
+}
+```
+
+`database.json` will pull in out environmental variables from our `.env` because we have installed `dotenv`.
+
+Now lets create a migration!
 
 ```sh
   db-migrate create create-schema
@@ -109,7 +134,7 @@ and now a corresponding down migrationg in `##############-create-schema-down.sq
   DROP SCHEMA todo_public;
   ```
 
-So what's going on here? If you have not seen too much sql and it appears its yelling at you with a tone of capitalization, do not worry, that is just a formality. SQL is case insensitive so often times its increases readability if SQL keywords are capitalized. Feel free to use all lowercase everything if you prefer. Why do we need to migrations? For everything we do to modify the database, we want to be able to easily revert our changes. This practice is somewhat [contested][stackoverflow-migration], although I tend to like it, especially during projects like this which are primarily for experimentation.
+So what's going on here? If you have not seen too much sql and it appears its yelling at you with a harsh tone of capitalization, do not worry, that is just a formality. SQL is case insensitive so often times it increases readability if SQL keywords are capitalized. Feel free to use all lowercase everything if you prefer. Why do we need to migrations? For everything we do to modify the database, we want to be able to easily revert our changes. This practice is somewhat [contested][stackoverflow-migration], although I tend to like it, especially during projects like this which are primarily for experimentation.
 
 [stackoverflow-migration]:<https://nickcraver.com/blog/2016/05/03/stack-overflow-how-we-do-deployment-2016-edition/#database-migrations>
 
@@ -124,13 +149,13 @@ Next we will add a migration for our todos. `db-migrate create create-todo-table
 ```sql
 CREATE TABLE todo_public.todo (
   id serial PRIMARY KEY,
-  title text NOT NULL,
-  done boolean DEFAULT FALSE,
+  task text NOT NULL,
+  completed boolean DEFAULT FALSE,
   created_at timestamptz DEFAULT now()
 );
 ```
 
-This will create a new table named `todo` on our `todo_public` schema with an `id`, a `title`(the task), a `done` boolean defaulted to false and a timestamp(with time zone) that will default to the current time.
+This will create a new table named `todo` on our `todo_public` schema with an `id`, a `task`, a `completed` boolean defaulted to false and a timestamp(with time zone), `created_at` that will default to the current time.
 
 `migrations/sqls/#############-create-todo-table-down`:
 
@@ -140,8 +165,6 @@ DROP TABLE organize.todo;
 
 The down migrations simply drops the table.
 
-Now that we have a table lets POSTGRAPHILE!
+`db-migrate up` and we are off to the next section.
 
-## Fun with our new table
 
-`yarn add postgraphile @postgraphile
