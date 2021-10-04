@@ -2,7 +2,7 @@
   
   **TL;DR** The structured nature of [Postgres][postgres] (A relational database mangement system) allows [Postgraphile][postgraphile] to generate a wonderful interface to [Graphql][graphql]. [Project Source at Github][source]
   
-  [source]:<https://github.com/dkkloimwieder/postgraphile-pubsub-todo>
+  [source]:<https://github.com/dkkloimwieder/pg-todo-tutorial>
   [postgres]:<https://www.postgresql.org/>
   [postgraphile]:<https://www.graphile.org/postgraphile/>
   [graphql]:<https://graphql.org/>
