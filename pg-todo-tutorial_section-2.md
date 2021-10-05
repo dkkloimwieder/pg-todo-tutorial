@@ -3,9 +3,9 @@
 In this section we will get to play with [postgraphile][postgraphile] via CLI and then setup [express.js][express] as a more permanent solution.
 
 [postgraphile]: <https://www.graphile.org/postgraphile/>
-[express.js]: <https://expressjs.com/>
+[express]: <https://expressjs.com/>
 
-## Section-2, Postgraphile and Friends
+## Section 2, Postgraphile and Friends
 
 If you are following along jump to **Start Section 2** below but if you are just now starting the tutorial at branch `section-2` you will want to make sure you have a postgres instance up and running with an appropriately configured `.env`. I have provided defaults that are not at all secure, at the very least a password change might be in order. Make sure to add `.env` to your `.gitignore` and then:
 
@@ -79,7 +79,11 @@ PostGraphile v4.12.4 server listening on port 5000 🚀
 
 Click the "GraphiQL GUI/IDE" link or open localhost:5000/graphiql in your browser.
 
+<details>
+<summary>Here is a screenshot if you would like to compare</summary>
+
 ![graphiql in the browser](assets/pg-todo-tutorial_graphiql.png)
+</details>
 
 Voila! We have easy access to our `todo` table. The `graphiql` explorer is primarily divided into four panes. The first is populated with queries or mutations depending on which you select that can built. The second is the actual interface to graphql queries. Clicking on items in the first pane will incrementally build queries in the second. The third pane is the output from the queries and the final pane is our documentation that postgraphile automagically generates for us.
 
@@ -134,7 +138,7 @@ COMMENT ON COLUMN todo_public.todo.completed IS NULL;
 
 `db-migrate up`
 
-Now back to the browser. Our documentation is magically updated. Who knew databases were so good at centralizing the storage of information? 
+Now back to the browser. Our documentation is magically updated. Who knew databases were so good at centralizing the storage of information?
 
 So lets create a todo. If we look in the leftmost panel we see only queries. Go to the second panel and clear it and then try `ctl-space`. This is perhaps the most helpful feature besides generating all of our schemas, serving them, and documenting them. It should list four options. We want a mutation. The first panel will now show our available schemas. Select `createTodo` and then the required fields(they are indicated by an asterisk: input -> todo -> task). Now we must simply enter a task and... Also specify what we want our mutation to return. In our case it will be `todo`. Select all the fields. We want to be able to take a look at the new todo that has been generated. Out mutation now looks like:
 
@@ -152,7 +156,88 @@ mutation {
 }
 ```
 
-and a little picture of the browser in case there is any confusion. Notice that in the documentation the required fields are indicated not by `*` but by `!`
+Run it and take a look at the output. Here is my browser in case there is any confusion.
+
+<details>
+
+<summary>click to expand screenshot</summary>
 
 ![graphiql mutations](assets/pg-todo-tutorial_graphiql-mutation.png)
 
+</details>
+
+Everything looks as it should. You will notice the `id` field in my example is not `1` but yours likely will be as it corresponds to the first `todo` that has been created in the database. Serial `id` keys are not always optimal but for our purpose they are sufficient. There is a new field that is not in the database: `NodeId`.
+
+Ohhhh `NodeId`, where do you come from? Look in the documentation. It will tell you something like
+
+`The ID scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as "4") or integer (such as 4) input value will be accepted as an ID.`
+
+Graphql is gets much of its power and usefulness from the fact that it *normalizes* our data. Each piece of data in graphql gets a unique identifier. The key is a hash of the data and allows us to query our endpoint with laser precision, and then also to cache the query. We will not need the NodeId for quite some time, but it is nice to know we can get a hold of any of our nodes(todos) by NodeId if the need arises (like client side cache manipulation).
+
+Have fun with graphiql for a little while. Make sure that you can fetch all the todos and fields, and perform an update and a deletion. Hint: The explorer (the first panel in graphiql) is your friend. Drop downs follow if you get stuck.
+
+<details>
+<summary>All Todos</summary>
+
+```gql
+Total count of all todos and all of the fields:
+
+{
+  todos {
+    totalCount
+    nodes {
+      completed
+      createdAt
+      id
+      nodeId
+      task
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Delete todo</summary>
+
+```gql
+Delete todo with id 3 and return deleted todo with all fields:
+
+mutation {
+  deleteTodo(input: {id: 3}) {
+    todo {
+      nodeId
+      completed
+      createdAt
+      id
+      task
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Update completed</summary>
+
+```gql
+
+Update completed to true of todo id 4 and return todo with all fields:
+
+mutation {
+  updateTodo(input: {patch: {completed: true}, id: 4}) {
+    todo {
+      completed
+      createdAt
+      id
+      nodeId
+      task
+    }
+  }
+}
+
+```
+
+</details>
