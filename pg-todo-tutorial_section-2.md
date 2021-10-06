@@ -162,7 +162,7 @@ Run it and take a look at the output. Here is my browser in case there is any co
 
 <summary>click to expand screenshot</summary>
 
-![graphiql mutations](assets/pg-todo-tutorial_graphiql-mutation.png)
+![graphiql mutations](assets/pg-todo-tutorial_graphiql-createTodo.png)
 
 </details>
 
@@ -241,3 +241,80 @@ mutation {
 ```
 
 </details>
+
+At this point we will go ahead and setup Express.js so that we have a more permanent solution than running postgraphile from the command line.
+
+```sh
+yarn add express
+yarn add nodemon -D
+```
+
+We will `mkdir server` for our express server to live in and then two files, and index.js and a postgraphile.js
+
+```js
+/* server/index.js */
+
+const path = require('path')
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+const express = require('express');
+const postgraphile = require('./postgraphile');
+
+const app = express();
+app.use(postgraphile);
+
+app.listen(process.env.PORT)
+
+```
+
+Let's also define the `PORT` we will be using to serve content in our `.env`: `echo 'PORT=3333' >> .env`
+
+`server/index.js` is pretty straightforward at this point. We need `server/postgraphile.js` to define out postgraphile [middleware][middleware].
+
+[middleware]:<https://www.graphile.org/postgraphile/usage-library/>
+
+```js
+/* server/postgraphile.js */
+
+const { postgraphile } = require('postgraphile');
+const PgSimplifyInflectorPlugin = require('@graphile-contrib/pg-simplify-inflector');
+
+const {POSTGRES_DB, POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT} = process.env
+
+module.exports = postgraphile(
+  {
+    database: POSTGRES_DB,
+    host: POSTGRES_HOST,
+    user: POSTGRES_USER,
+    password: POSTGRES_PASSWORD,
+    port: POSTGRES_PORT
+  },
+  'todo_public',
+  {
+    appendPlugins: [PgSimplifyInflectorPlugin],
+    watchPg: true,
+    graphiql: true,
+    enhanceGraphiql: true
+  }
+)
+
+```
+
+This file is also very basic and just assigns all the `.env` variables and CLI options we have already been using.
+
+Then we just define a `watch` command in `package.json`
+
+```json
+/* package.json */
+
+{
+  "name": "pg-todo-tutorial",
+  ...
+  "scripts": {
+    "watch": "nodemon server/index.js"
+  }
+}
+```
+
+`yarn watch` and browse to `localhost:3333/graphiql` We are now serving our database via node. Oh happy day.
+
+
