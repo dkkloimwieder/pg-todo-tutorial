@@ -2,7 +2,7 @@
   "name": "pg-todo-tutorial",
   "version": "0.0.1",
   "description": "Postgraphile TODO Tutorial",
-  "main": "index.js",
+  "main": "server/index.js",
   "repository": "https://github.com/dkkloimwieder/pg-todo-tutorial",
   "author": "d kloimwieder <dkkloimwieder@gmail.com>",
   "license": "MIT",
@@ -10,6 +10,15 @@
     "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
     "db-migrate": "^1.0.0-beta.16",
     "db-migrate-pg": "^1.2.2",
-    "dotenv": "^10.0.0"
+    "express": "^4.17.1",
+    "postgraphile": "^4.12.4"
+  },
+  "devDependencies": {
+    "dotenv": "^10.0.0",
+    "nodemon": "^2.0.13"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "watch": "nodemon server/index.js"
   }
 }
