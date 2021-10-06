@@ -15,7 +15,7 @@
 ##Prerequisites
 
   The largest prerequisite is to have docker and docker-compose installed
-  locally for the postgresql database, or have a running postgres instance you are willing to hack at without any real security precautions. Knowledge of javascript, the node.js ecosystem, and a basic understanding of react.js is assumed. React will get glossed over as there are thousands of great resources on the subject.
+  locally for the postgresql database, or have a running local postgres instance that you don't mind experimenting on. Knowledge of javascript, the node.js ecosystem, and a basic understanding of react.js is assumed. React might get glossed over a little as there are thousands of great resources on the subject.
 
 ##Branches
 
