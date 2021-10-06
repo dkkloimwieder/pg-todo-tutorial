@@ -162,7 +162,7 @@ Run it and take a look at the output. Here is my browser in case there is any co
 
 <summary>click to expand screenshot</summary>
 
-![graphiql mutations](assets/pg-todo-tutorial_graphiql-mutation.png)
+![graphiql mutations](assets/pg-todo-tutorial_graphiql-createTodo.png)
 
 </details>
 
