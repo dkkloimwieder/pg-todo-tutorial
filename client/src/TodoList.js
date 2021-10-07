@@ -6,7 +6,19 @@ import { GET_TODOS, CREATE_TODO } from './graphql';
 export default function TodoList() {
   const [input, setInput] = useState('');
   const [createTodo] = useMutation(CREATE_TODO, {
-    refetchQueries: [GET_TODOS],
+    update: (cache, mutationResult) => {
+      cache.writeQuery({
+        query: GET_TODOS,
+        data: {
+          ...cache.readQuery({ query: GET_TODOS }),
+          todos: {
+            __typename: 'TodosConnection',
+            nodes: [...nodes, mutationResult.data.createTodo.todo],
+          },
+        },
+      });
+    },
+    /*refetchQueries: [GET_TODOS],*/
   });
   const { data, error, loading } = useQuery(GET_TODOS);
   if (error) return <h1>Error...</h1>;
