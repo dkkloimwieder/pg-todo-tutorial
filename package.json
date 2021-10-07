@@ -8,6 +8,7 @@
   "license": "MIT",
   "dependencies": {
     "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
+    "cors": "^2.8.5",
     "db-migrate": "^1.0.0-beta.16",
     "db-migrate-pg": "^1.2.2",
     "express": "^4.17.1",

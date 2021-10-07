@@ -1,10 +1,6 @@
-function App() {
-  return (
-    <div className="App">
+import React from 'react';
+import TodoList from './TodoList';
 
-
-    </div>
-  );
+export default function App() {
+  return <TodoList />;
 }
-
-export default App;
