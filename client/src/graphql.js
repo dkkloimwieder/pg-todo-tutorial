@@ -3,12 +3,11 @@ import { gql } from '@apollo/client';
 /* Get all To Dos */
 export const GET_TODOS = gql`
   query {
-    todos {
-      nodes {
-        id
-        task
-        completed
-      }
+    todosList {
+      nodeId
+      id
+      task
+      completed
     }
   }
 `;
@@ -18,6 +17,7 @@ export const CREATE_TODO = gql`
   mutation CreateTodo($task: String!) {
     createTodo(input: { todo: { task: $task } }) {
       todo {
+        nodeId
         id
         task
         completed
@@ -31,6 +31,7 @@ export const UPDATE_COMPLETED = gql`
   mutation updateCompleted($completed: Boolean!, $id: Int!) {
     updateTodo(input: { patch: { completed: $completed }, id: $id }) {
       todo {
+        nodeId
         id
         completed
       }

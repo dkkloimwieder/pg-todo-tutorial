@@ -7,28 +7,25 @@ export default function TodoList() {
   const [input, setInput] = useState('');
   const [createTodo] = useMutation(CREATE_TODO, {
     update: (cache, mutationResult) => {
+      console.log(mutationResult);
       cache.writeQuery({
         query: GET_TODOS,
         data: {
           ...cache.readQuery({ query: GET_TODOS }),
-          todos: {
-            __typename: 'TodosConnection',
-            nodes: [...nodes, mutationResult.data.createTodo.todo],
-          },
+          todosList: todosList.concat(mutationResult.data.createTodo.todo),
         },
       });
     },
-    /*refetchQueries: [GET_TODOS],*/
   });
   const { data, error, loading } = useQuery(GET_TODOS);
   if (error) return <h1>Error...</h1>;
   if (loading) return <h1>loading...</h1>;
-
-  const { nodes } = data.todos;
+  console.log(data);
+  const { todosList } = data;
 
   return (
     <div>
-      {nodes.map((todo) => {
+      {todosList.map((todo) => {
         const { id } = todo;
         return <Todo key={id} {...todo} />;
       })}
@@ -40,7 +37,7 @@ export default function TodoList() {
         }}
       >
         <label>
-          New To Do <br />
+          Create Todo
           <input
             type="text"
             value={input}

@@ -23,5 +23,6 @@ module.exports = postgraphile(
     watchPg: true,
     graphiql: true,
     enhanceGraphiql: true,
+    simpleCollections: 'both',
   }
 );
