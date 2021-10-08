@@ -11,7 +11,7 @@ export default function TodoList() {
         query: GET_TODOS,
         data: {
           ...cache.readQuery({ query: GET_TODOS }),
-          todosList: todosList.concat(mutationResult.data.createTodo.todo),
+          todos: todos.concat(mutationResult.data.createTodo.todo),
         },
       });
     },
@@ -19,11 +19,11 @@ export default function TodoList() {
   const { data, error, loading } = useQuery(GET_TODOS);
   if (error) return <h1>Error...</h1>;
   if (loading) return <h1>loading...</h1>;
-  const { todosList } = data;
+  const { todos } = data;
 
   return (
     <div>
-      {todosList.map((todo) => {
+      {todos.map((todo) => {
         const { id } = todo;
         return <Todo key={id} {...todo} />;
       })}

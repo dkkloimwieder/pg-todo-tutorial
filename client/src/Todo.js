@@ -17,15 +17,14 @@ export default function Todo({ id, task, completed }) {
           ),
         },
       });*/
-
       cache.modify({
         id: 'ROOT_QUERY',
         fields: {
-          todosList(existingRefs) {
-            console.log(existingRefs);
+          todos(existingRefs) {
             return existingRefs.filter(
               (ref) =>
-                ref.__ref !== mutationResult.data.deleteTodo.deletedTodoNodeId
+                ref.__ref !==
+                `Todo:${mutationResult.data.deleteTodoById.deletedTodoId}`
             );
           },
         },
@@ -48,7 +47,7 @@ export default function Todo({ id, task, completed }) {
     const { data } = await updateCompleted({
       variables: { id: id, completed: !checked },
     });
-    setChecked(data.updateTodo.todo.completed);
+    setChecked(data.updateTodoById.todo.completed);
   };
 
   const handleClick = (id) => {
