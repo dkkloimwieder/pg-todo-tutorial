@@ -7,7 +7,6 @@ export default function TodoList() {
   const [input, setInput] = useState('');
   const [createTodo] = useMutation(CREATE_TODO, {
     update: (cache, mutationResult) => {
-      console.log(mutationResult);
       cache.writeQuery({
         query: GET_TODOS,
         data: {
@@ -20,7 +19,6 @@ export default function TodoList() {
   const { data, error, loading } = useQuery(GET_TODOS);
   if (error) return <h1>Error...</h1>;
   if (loading) return <h1>loading...</h1>;
-  console.log(data);
   const { todosList } = data;
 
   return (

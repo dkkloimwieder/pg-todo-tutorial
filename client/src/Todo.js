@@ -1,18 +1,44 @@
 import React, { useState } from 'react';
-import { UPDATE_COMPLETED, DELETE_TODO } from './graphql';
+import { UPDATE_COMPLETED, DELETE_TODO, GET_TODOS } from './graphql';
 import { useMutation } from '@apollo/client';
 
 export default function Todo({ id, task, completed }) {
   const [updateCompleted] = useMutation(UPDATE_COMPLETED);
   const [deleteTodo] = useMutation(DELETE_TODO, {
     update: (cache, mutationResult) => {
+      /*const queryTodos = cache.readQuery({ query: GET_TODOS });
+      cache.writeQuery({
+        query: GET_TODOS,
+        data: {
+          ...queryTodos,
+          todosList: queryTodos.todosList.filter(
+            (todo) =>
+              todo.nodeId !== mutationResult.data.deleteTodo.deletedTodoNodeId
+          ),
+        },
+      });*/
+
+      cache.modify({
+        id: 'ROOT_QUERY',
+        fields: {
+          todosList(existingRefs) {
+            console.log(existingRefs);
+            return existingRefs.filter(
+              (ref) =>
+                ref.__ref !== mutationResult.data.deleteTodo.deletedTodoNodeId
+            );
+          },
+        },
+      });
+
+      /*
       cache.evict({
         id: 'ROOT_QUERY',
         field: cache.identify({
           __ref: mutationResult.data.deleteTodo.deletedTodoNodeId,
         }),
       });
-      cache.gc();
+      cache.gc();*/
     },
   });
 
