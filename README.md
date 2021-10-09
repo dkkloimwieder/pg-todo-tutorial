@@ -23,6 +23,7 @@
 
     [x] section-1 - Setup of docker-compose with postgres, initial migrations to setup a schema and table in postgres
     [x] section-2 - Postgraphile CLI, fun with graphiql, express
+    [] section-3a - Brief interlude with queries, some further simplification of postgraphile and an "inital" working todo app with apollo and react
     [] section-3 - Apollo-client, React, pubsub with websockets
     [x] main - current 
 
