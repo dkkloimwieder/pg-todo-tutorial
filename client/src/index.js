@@ -8,8 +8,19 @@ console.log(process.env);
 
 const client = new ApolloClient({
   uri: 'http://127.0.0.1:3333/graphql' /* variables from toplevel project .env */,
-  cache:
-    new InMemoryCache() /*NOTHING TO SEEEE!!{ dataIdFromObject: (object) => object.nodeId }*/,
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          todos: {
+            merge(existing = [], incoming) {
+              return [...existing, ...incoming];
+            },
+          },
+        },
+      },
+    },
+  }) /*NOTHING TO SEEEE!!{ dataIdFromObject: (object) => object.nodeId }*/,
 });
 
 ReactDOM.render(

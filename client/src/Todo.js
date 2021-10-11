@@ -1,5 +1,5 @@
 import React from 'react';
-import { UPDATE_COMPLETED, DELETE_TODO, GET_TODOS } from './graphql';
+import { UPDATE_COMPLETED, DELETE_TODO } from './graphql';
 import { useMutation } from '@apollo/client';
 
 export default function Todo({ id, task, completed }) {
@@ -58,7 +58,7 @@ export default function Todo({ id, task, completed }) {
   };
 
   return (
-    <li className="todo-list__element">
+    <div className="todo-list__element">
       <div
         className="todo-list__text"
         style={{ textDecoration: completed ? 'line-through' : 'none' }}
@@ -79,6 +79,6 @@ export default function Todo({ id, task, completed }) {
           Delete
         </button>
       </div>
-    </li>
+    </div>
   );
 }
