@@ -17,26 +17,29 @@ export default function TodoList() {
     },
   });
   const { data, error, loading } = useQuery(GET_TODOS);
-  if (error) console.error(error);
-  if (loading) return <h1>loading...</h1>;
+  if (error) return <p className="alert">{error.message}</p>;
+  if (loading) return <p className="alert">loading...</p>;
   const { todos } = data;
 
+  //const todos = [{ task: 'replace meeeee!', id: '1', completed: false }];
   return (
     <div>
       <ul className="todo-list">
         {todos.map((todo) => {
-          const { id } = todo;
-          return <Todo key={id} {...todo} />;
+          return <Todo key={todo.id} {...todo} />;
         })}
       </ul>
       <form
-        className="todo-list__element todo-list__form"
-        onSubmit={(e) => {
+        className="todo-list__form"
+        onSubmit={async (e) => {
           e.preventDefault();
-          const { error } = createTodo({
-            variables: { task: input },
-          });
-          if (error) console.error(error);
+          try {
+            await createTodo({
+              variables: { task: input },
+            });
+          } catch (error) {
+            console.error(error);
+          }
           setInput('');
         }}
       >
@@ -49,7 +52,7 @@ export default function TodoList() {
         />
         <br></br>
         <input
-          className="todo-list__button--dark"
+          className="todo-list__button"
           type="submit"
           value="Create Todo"
         />

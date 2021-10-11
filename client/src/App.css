@@ -12,7 +12,8 @@ body {
   margin-top: 2rem;
 }
 
-.todo-list__element {
+.todo-list__element,
+.todo-list__form {
   margin: 0 auto;
   margin-bottom: 0.5rem;
   padding: 0.25rem;
@@ -20,7 +21,7 @@ body {
   width: 50vw;
   display: flex;
   justify-content: space-between;
-  box-shadow: 3px 3px black;
+  box-shadow: 0.3rem 0.3rem black;
   align-items: center;
 }
 
@@ -28,7 +29,7 @@ body {
   overflow: hidden;
 }
 
-.todo-list__button--dark {
+.todo-list__button {
   color: white;
   background: rgb(35, 35, 35);
   border: none;
@@ -38,8 +39,8 @@ body {
   cursor: pointer;
 }
 
-.todo-list__button--dark:hover,
-.todo-list__button--dark:focus {
+.todo-list__button:hover,
+.todo-list__button:focus {
   opacity: 65%;
 }
 
@@ -56,4 +57,11 @@ body {
 
 .todo-list__button-container {
   min-width: max-content;
+}
+
+.alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 1rem;
 }

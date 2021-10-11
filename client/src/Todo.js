@@ -4,9 +4,16 @@ import { useMutation } from '@apollo/client';
 
 export default function Todo({ id, task, completed }) {
   const [updateCompleted] = useMutation(UPDATE_COMPLETED);
+
   const [deleteTodo] = useMutation(DELETE_TODO, {
     update: (cache, mutationResult) => {
-      /*const { todos } = cache.readQuery({ query: GET_TODOS });
+      cache.evict({
+        id: `Todo:${mutationResult.data.deleteTodoById.deletedTodoId}`,
+      });
+      cache.gc();
+    },
+  });
+  /*const { todos } = cache.readQuery({ query: GET_TODOS });
       cache.writeQuery({
         query: GET_TODOS,
         data: {
@@ -15,8 +22,8 @@ export default function Todo({ id, task, completed }) {
               todo.id !== mutationResult.data.deleteTodoById.deletedTodoId
           ),
         },
-      });*/
-      /*
+      })
+
       cache.modify({
         id: 'ROOT_QUERY',
         fields: {
@@ -29,21 +36,25 @@ export default function Todo({ id, task, completed }) {
           },
         },
       });
-      */
-      cache.evict({
-        id: `Todo:${mutationResult.data.deleteTodoById.deletedTodoId}`,
-      });
       cache.gc();
     },
-  });
+  });*/
 
-  const handleDeleteClick = (id) => {
-    deleteTodo({ variables: { id: id } });
+  const handleDeleteClick = async (id) => {
+    try {
+      await deleteTodo({ variables: { id: id } });
+    } catch (error) {
+      console.error(error);
+    }
   };
-  const handleCheckClick = (id) => {
-    updateCompleted({
-      variables: { id: id, completed: !completed },
-    });
+  const handleCompleteClick = async (id) => {
+    try {
+      await updateCompleted({
+        variables: { id: id, completed: !completed },
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -56,13 +67,13 @@ export default function Todo({ id, task, completed }) {
       </div>
       <div className="todo-list__button-container">
         <button
-          className="todo-list__button--dark"
-          onClick={() => handleCheckClick(id)}
+          className="todo-list__button"
+          onClick={() => handleCompleteClick(id)}
         >
           Complete
         </button>
         <button
-          className="todo-list__button--dark"
+          className="todo-list__button"
           onClick={() => handleDeleteClick(id)}
         >
           Delete
