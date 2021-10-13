@@ -515,8 +515,6 @@ const client = new ApolloClient({
 Try it out. We will continue to use `classicIds:true` in for the foreseeable future, but its nice to know we have options. { dataIdFromObject: (object) => object.nodeId }
 
 P.S. Here's another (option for renaming...)
-dataIdFromObject(responseObject) {
-switch (responseObject.\_\_typename) {
 
 ```js
 const client = new ApolloClient({
