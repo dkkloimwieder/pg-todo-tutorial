@@ -1,5 +1,8 @@
-const { postgraphile } = require('postgraphile');
+const { postgraphile, makePluginHook } = require('postgraphile');
 const PgSimplifyInflectorPlugin = require('@graphile-contrib/pg-simplify-inflector');
+const { default: PgPubsub } = require('@graphile/pg-pubsub');
+
+const pluginHook = makePluginHook([PgPubsub]);
 
 const {
   POSTGRES_DB,
@@ -26,5 +29,8 @@ module.exports = postgraphile(
     simpleCollections: 'only',
     graphileBuildOptions: { pgOmitListSuffix: true },
     classicIds: true,
+    pluginHook,
+    subscriptions: true,
+    simpleSubscriptions: true,
   }
 );
