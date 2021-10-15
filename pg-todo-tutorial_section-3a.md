@@ -428,3 +428,106 @@ Note the lack of useState or useEffect in all of the above queries/mutations. Wh
 And thats all folks. Our todo list operates as it should...
 
 Except that we do not yet get automatic updates from other sources of database writes. What is going on? What if my project-manager/editor/cat wants to see whats going on and maybe add or remove something from our all important task list? In Section 3 it will be back to the wonderful land of `PL/pgSQL`, `pg_notify()`, and then subscriptions for everyone.
+
+### The Most Brief Postscript on Field Policies
+
+Before we start with subscriptions I have decided I would rearrange my code todo list just a bit. The `TodoInput` component has been pulled out of the `TodoList` component and I thought maybe we could simplify the `GET_TODOS` cache update. There is a wonderful way in which we can define the `merge` function that apollo client will use for any particular field. By default incoming data replaces what exists in Apollo's cache. This is very sensible for simple types, but for more complex types, like objects and arrays, it is often preferable to "merge" the incoming data with the existing data. This is what we are explicitly doing with:
+
+```js
+...
+ const [createTodo] = useMutation(CREATE_TODO), {update: (cache, mutationResult) => {
+      const todosQuery = cache.readQuery({ query: GET_TODOS });
+      cache.writeQuery({
+        query: GET_TODOS,
+        data: {
+          todos: todosQuery.todos.concat(mutationResult.data.createTodo.todo),
+        },
+      });
+...
+```
+
+Apollo Client's `inMemoryCache` takes an optional `TypePolicy` object that allows for the definition of a [field policy][fieldpolicy]. The documentation is excellent on the subject so I will only say that we can define the default behavior of the cache as it pertains to merges(writing), reads(querying), and keys(identifying). We are concerned primarily with merges on our `todos` array so our `TypePolicy` will look like this:
+
+```js
+/* client/src/index.js*/
+...
+
+const client = new ApolloClient({
+  uri: 'http://127.0.0.1:3333/graphql' /* variables from toplevel project .env */,
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          todos: {
+            merge(existing = [], incoming) {
+              return [...existing, ...incoming];
+            },
+          },
+        },
+      },
+    },
+  })
+});
+
+...
+```
+
+We are just concatenating via spread syntax our existing `todos` field with incoming `todos`. Note that we provide a default argument for `existing` as an empty array so that when we have no `todos` (like on startup) our client will not crash.
+
+Now to simplifying our cache update in `TodoInput`:
+
+```js
+/* client/src/TodoInput.js */
+
+const [createTodo] = useMutation(CREATE_TODO, {
+  update: (cache, mutationResult) => {
+    cache.writeQuery({
+      query: GET_TODOS,
+      data: {
+        todos: [mutationResult.data.createTodo.todo],
+      },
+    });
+  },
+});
+```
+
+We remove our `readQuery` and simply define data as the incoming todo (as an array!). Note that we can no longer use the `readQuery`/`writeQuery` approach to delete from the cache.
+
+...And another good example of the use of the `TypePolicy` object. At the beginning of this section I opted to use set the `classicIds: true` option for postgraphile. This allowed Apollo Client to properly identify each `todo` by its `NodeId` instead of its postgres `id` field. This in turn allowed us to easily identify our todo when updating the cache. The `keyFields` property of `TypePolicy` lets us use any field to identify an object in the cache. Using nodeId would look like:
+
+```js
+/* client/src/index.js*/
+...
+
+const client = new ApolloClient({
+  uri: 'http://127.0.0.1:3333/graphql'
+  cache: new InMemoryCache({
+    typePolicies: {
+      Todo: {
+        keyFields: ["nodeId"]
+      },
+    }
+  })
+});
+...
+```
+
+Try it out. We will continue to use `classicIds:true` in for the foreseeable future, but its nice to know we have options. { dataIdFromObject: (object) => object.nodeId }
+
+P.S. Here's another (option for renaming...)
+
+```js
+const client = new ApolloClient({
+  uri: 'http://127.0.0.1:3333/graphql'
+  cache: new InMemoryCache({
+    dataIdFromObject(responseObject) {
+      switch (responseObject.__typename) {
+        case 'Todo': return `Todo:${responseObject.nodeId}`;
+      }
+    }
+  })
+});
+...
+```
+
+Okay that is seriously it.
