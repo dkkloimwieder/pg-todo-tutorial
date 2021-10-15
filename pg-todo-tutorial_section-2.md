@@ -2,12 +2,12 @@
 
 In this section we will get to play with [postgraphile][postgraphile] via CLI and then setup [express.js][express] as a more permanent solution.
 
-[postgraphile]: <https://www.graphile.org/postgraphile/>
-[express]: <https://expressjs.com/>
+[postgraphile]: https://www.graphile.org/postgraphile/
+[express]: https://expressjs.com/
 
 ## Section 2, Postgraphile and Friends
 
-If you are following along jump to **Start Section 2** below but if you are just now starting the tutorial at branch `section-2` you will want to make sure you have a postgres instance up and running with an appropriately configured `.env`. I have provided defaults that are not at all secure, at the very least a password change might be in order. Make sure to add `.env` to your `.gitignore` and then:
+If you are following along jump to **Start Section 2** below but if you are just now starting the tutorial at branch `section-2` you will want to make sure you have a postgres instance up and running with an appropriately configured `.env`. I have provided defaults in `.env_example` that are not at all secure, at the very least a password change might be in order. Make sure to add `.env` to your `.gitignore` and then:
 
 ```sh
  yarn install && yarn global add db-migrate
@@ -17,7 +17,7 @@ If you are following along jump to **Start Section 2** below but if you are just
 
 ---
 
-**Start Section 2**
+## Start Section 2
 
 Now lets test the database with `pgcli` or `psql` (You can use any postgres client really)
 
@@ -28,7 +28,7 @@ pgcli "postgres://postgres:SAMPLE_PASSWORD@127.0.0.1/todo_db"
 Now at the prompt we will list the contents of our `todo` table on our `todo_public` schema:
 
 ```psql
-postgres@127:todo_db> \d todo_public.todo 
+postgres@127:todo_db> \d todo_public.todo
 ```
 
 This should produce the output:
@@ -50,6 +50,8 @@ postgres@127:todo_db>
 ```
 
 If your client cannot connect or you cannot list the table something has gone awry. Try `\dt todo_public.*` to see if any table has been created under the schema `todo_public`. If you cannot connect check that your environmental variables are correct. The connection string is of the form `"postgres://POSTGRES_USER:POSTGRES_PASSWORD@POSTGRES_HOST/POSTGRES_DB"`. I am certain you will have it figured out in no time. If not, open an issue on the [github][source].
+
+[source]: https://github.com/dkkloimwieder/pg-todo-tutorial
 
 Install `postgraphile` and a plugin to simplify naming **globally**. Do not worry we will get rid of our global install when we are don with them. For now it is convenient for command line usage.
 
@@ -83,6 +85,7 @@ Click the "GraphiQL GUI/IDE" link or open localhost:5000/graphiql in your browse
 <summary>Here is a screenshot if you would like to compare</summary>
 
 ![graphiql in the browser](assets/pg-todo-tutorial_graphiql.png)
+
 </details>
 
 Voila! We have easy access to our `todo` table. The `graphiql` explorer is primarily divided into four panes. The first is populated with queries or mutations depending on which you select that can built. The second is the actual interface to graphql queries. Clicking on items in the first pane will incrementally build queries in the second. The third pane is the output from the queries and the final pane is our documentation that postgraphile automagically generates for us.
@@ -107,9 +110,9 @@ Lets use the first pane to build a query. Select the `todos` dropdown and then c
 }
 ```
 
->Note: The pg-simplify-inflector simplifies the "inflection" or the method that it uses to create names when analyzing the database. Postgraphile is by default very verbose/explicit with naming as it [leads to less accidental conflicts][inflection]. In out example there is very little difference but try starting postgraphile without it and you will get the general idea of what it does.
+> Note: The pg-simplify-inflector simplifies the "inflection" or the method that it uses to create names when analyzing the database. Postgraphile is by default very verbose/explicit with naming as it [leads to less accidental conflicts][inflection]. In out example there is very little difference but try starting postgraphile without it and you will get the general idea of what it does.
 
-[inflections]: <https://www.graphile.org/postgraphile/inflection/>
+[inflections]: https://www.graphile.org/postgraphile/inflection/
 
 Before we move on lets explore the documentation and see what postgraphile has generated for us so far.
 We are primarily interested in adding a todo at this point, as we have none. Browse `mutations` and then `input:CreateTodoInput`. And then `todo:TodoInput`. Now we know! Although not really. The fields for input are listed but what if our coworker also wanted to explore our newly created API? Maybe we should add some helpful coments in out database that describe the fields that we will be using. Back to the SQL!
@@ -127,14 +130,14 @@ COMMENT ON COLUMN todo_public.todo.completed IS 'status of todo';
 and corresponding `migrations/sqls/######-todo-comments-down.sql`
 
 ```sql
-COMMENT ON TABLE todo_public.todo IS NULL; 
+COMMENT ON TABLE todo_public.todo IS NULL;
 COMMENT ON COLUMN todo_public.todo.id IS NULL;
-COMMENT ON COLUMN todo_public.todo.task IS NULL; 
+COMMENT ON COLUMN todo_public.todo.task IS NULL;
 COMMENT ON COLUMN todo_public.todo.created_at IS NULL;
 COMMENT ON COLUMN todo_public.todo.completed IS NULL;
 ```
 
->Note: COMMENT is postgreql specific
+> Note: COMMENT is postgreql specific
 
 `db-migrate up`
 
@@ -144,7 +147,7 @@ So lets create a todo. If we look in the leftmost panel we see only queries. Go 
 
 ```gql
 mutation {
-  createTodo(input: {todo: {task: "Finish Section 2"}}) {
+  createTodo(input: { todo: { task: "Finish Section 2" } }) {
     todo {
       id
       completed
@@ -172,7 +175,7 @@ Ohhhh `NodeId`, where do you come from? Look in the documentation. It will tell 
 
 `The ID scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as "4") or integer (such as 4) input value will be accepted as an ID.`
 
-Graphql is gets much of its power and usefulness from the fact that it *normalizes* our data. Each piece of data in graphql gets a unique identifier. The key is a hash of the data and allows us to query our endpoint with laser precision, and then also to cache the query. We will not need the NodeId for quite some time, but it is nice to know we can get a hold of any of our nodes(todos) by NodeId if the need arises (like client side cache manipulation).
+Graphql is gets much of its power and usefulness from the fact that it _normalizes_ our data. Each piece of data in graphql gets a unique identifier. The key is a hash of the data and allows us to query our endpoint with laser precision, and then also to cache the query. We will not need the NodeId for quite some time, but it is nice to know we can get a hold of any of our nodes(todos) by NodeId if the need arises (like client side cache manipulation).
 
 Have fun with graphiql for a little while. Make sure that you can fetch all the todos and fields, and perform an update and a deletion. Hint: The explorer (the first panel in graphiql) is your friend. Drop downs follow if you get stuck.
 
@@ -254,23 +257,22 @@ We will `mkdir server` for our express server to live in and then two files, and
 ```js
 /* server/index.js */
 
-const path = require('path')
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const express = require('express');
 const postgraphile = require('./postgraphile');
 
 const app = express();
 app.use(postgraphile);
 
-app.listen(process.env.PORT)
-
+app.listen(process.env.PORT);
 ```
 
-Let's also define the `PORT` we will be using to serve content in our `.env`: `echo 'PORT=3333' >> .env`
+Let's also define the `PORT` we will be using to serve content in our `.env`: `echo 'PORT=4000' >> .env`
 
 `server/index.js` is pretty straightforward at this point. We need `server/postgraphile.js` to define out postgraphile [middleware][middleware].
 
-[middleware]:<https://www.graphile.org/postgraphile/usage-library/>
+[middleware]: https://www.graphile.org/postgraphile/usage-library/
 
 ```js
 /* server/postgraphile.js */
@@ -278,7 +280,13 @@ Let's also define the `PORT` we will be using to serve content in our `.env`: `e
 const { postgraphile } = require('postgraphile');
 const PgSimplifyInflectorPlugin = require('@graphile-contrib/pg-simplify-inflector');
 
-const {POSTGRES_DB, POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT} = process.env
+const {
+  POSTGRES_DB,
+  POSTGRES_HOST,
+  POSTGRES_USER,
+  POSTGRES_PASSWORD,
+  POSTGRES_PORT,
+} = process.env;
 
 module.exports = postgraphile(
   {
@@ -286,17 +294,16 @@ module.exports = postgraphile(
     host: POSTGRES_HOST,
     user: POSTGRES_USER,
     password: POSTGRES_PASSWORD,
-    port: POSTGRES_PORT
+    port: POSTGRES_PORT,
   },
   'todo_public',
   {
     appendPlugins: [PgSimplifyInflectorPlugin],
     watchPg: true,
     graphiql: true,
-    enhanceGraphiql: true
+    enhanceGraphiql: true,
   }
-)
-
+);
 ```
 
 This file is also very basic and just assigns all the `.env` variables and CLI options we have already been using.
@@ -315,6 +322,4 @@ Then we just define a `watch` command in `package.json`
 }
 ```
 
-`yarn watch` and browse to `localhost:3333/graphiql` We are now serving our database via node. Oh happy day.
-
-
+`yarn watch` and browse to `localhost:4000/graphiql` We are now serving our database via node. Oh happy day.

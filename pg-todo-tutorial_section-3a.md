@@ -9,7 +9,7 @@ In this section we will create a [react][react] frontend that will use [apollo-c
 
 ## Section 3a, React & Apollo - A Brief Interlude
 
-If you are following along jump to **Start Section 3** below but if you are just now starting the tutorial at branch `section-3` you will want to make sure you have a postgres instance up and running with an appropriately configured `.env`. I have provided defaults that are not at all secure, at the very least a password change might be in order. Make sure to add `.env` to your `.gitignore` and then:
+If you are following along jump to **Start Section 3** below but if you are just now starting the tutorial at branch `section-3` you will want to make sure you have a postgres instance up and running with an appropriately configured `.env`. I have provided defaults that are not at all secure in .env_example, at the very least a password change might be in order. Make sure to add `.env` to your `.gitignore` and then:
 
 ```sh
  yarn install && yarn global add db-migrate
@@ -19,7 +19,7 @@ If you are following along jump to **Start Section 3** below but if you are just
 
 ---
 
-**Start Section 3a**
+### Start Section 3a
 
 In this section, we will build the frontend of our todo list with React and Apollo. I have gone ahead and used `create-react-app` and built a very basic skeleton of a todo list without any real functionality. I thought I would spare you the boilerplate as this is probably the one zillionth todo tutorial. The code is all in the `client` directory. I have also added [cors][cors] to `server/index.js`. If you are not familiar with `cors`, checkout the documentation, or just know that it is neccesary to properly access our soon to be developed frontend in a browser. For those following along, please merge the changes in `server`.
 
@@ -27,7 +27,7 @@ In this section, we will build the frontend of our todo list with React and Apol
 
 There are also two additional options in `server/postgraphile.js`, `simpleCollections: 'only'` and `graphileBuildOptions: { pgOmitListSuffix: true }`. Feel free to add/subtract these incrementally and then execute queries against them to see what they are up to. `simpleCollections: 'only'` will remove the node/edges structure of the graphql queries. The results are less verbose and leave us with simply `todo` where we would have previously had `node: {todo}`. Our `todos` query becomes `todosList` and so `graphileBuildOptions: { pgOmitListSuffix: true }` removes the list suffix. With the combination of the two options we now get and array of todos from `todos` query. `classicIds: true` replaces `nodeId` with `id` and `id` with `rowId`. This will simplify our life with Apollo a little later as Apollo (appropriately) uses the `id` field to identify and cache our data and in the case of graphql this is actually what we were previously calling `nodeId`. Note that none of these options are specifically neccesary, but enabling them allows our code on the frontend to be a little cleaner. Make sure that you run a few queries and look at the documentation in graphiql before proceeding.
 
-Now, before we dig into the client let's take a moment and explore how we might implement queries with dynamic input in `graphiql` before we start hard coding the queries in `client/src/graphql.js`. In `server/postgraphile.js` we have a couple settings that allow us to continue to experiment in graphiql `graphiql: true` and `enhanceGraphiql: true`. Go ahead and browse to `127.0.0.1:3333/graphiql` (PORT is set in .env and unless you have changed it, will be 3333). In the second column/pane of the graphiql interface lets define a new query which will take a variable as its argument (and note the new `rowId` and `id` fields):
+Now, before we dig into the client let's take a moment and explore how we might implement queries with dynamic input in `graphiql` before we start hard coding the queries in `client/src/graphql.js`. In `server/postgraphile.js` we have a couple settings that allow us to continue to experiment in graphiql `graphiql: true` and `enhanceGraphiql: true`. Go ahead and browse to `127.0.0.1:4000/graphiql` (PORT is set in .env and unless you have changed it, will be 4000). In the second column/pane of the graphiql interface lets define a new query which will take a variable as its argument (and note the new `rowId` and `id` fields):
 
 ```gql
 query getTodo($myRowId: Int!) {
@@ -105,7 +105,7 @@ The documentation on [queries][queries] on graphql.org is excellent. Have a look
 
 [queries]: https://graphql.org/learn/queries/
 
-Now I guess we should build something. Lets `cd client && yarn install`. This will give us the skeleton react app I spoke of previously, `@apollo/client` and `graphql`, which should be everything we need to finish this section.
+Now I guess we should build something. Lets `cd client && yarn install`. This will give us the skeleton of a react app, `@apollo/client` and `graphql`, which should be everything we need to finish this section.
 
 And then pretty much straight from the Apollo [documentation](https://www.apollographql.com/docs/react/get-started/) is...
 
@@ -118,7 +118,7 @@ import App from './App';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
 const client = new ApolloClient({
-  uri: 'localhost:3333/graphql' /* this should is localhost:PORT/graphql from toplevel .env*/
+  uri: 'localhost:4000/graphql' /* this should is localhost:PORT/graphql from toplevel .env*/
   cache: new InMemoryCache(),
 });
 
@@ -188,6 +188,7 @@ export const DELETE_TODO = gql`
 Before we start engineering out way to graphql wonderfulness with apollo make sure that executing `yarn start` in the client directory brings you up a wonderful todolist in your browser at `localhost:3000` (default port for `create-react-app`). A screenshot is hiding below the drop for your reference.
 
 <details><summary>Look at Meeeee!</summary>
+
 ![the todo list is alive](assets/pg-todo-tutorial_todo-start.png)</details>
 
 The css is all consolidated in `client/src/App.css`; Change it as you like, but know that I do find that color blue to be very pleasant... At this point I highly recommend the Apollo Client DevTools [extension][extension] for Mozilla Firefox or Google Chrome. It makes this part of the journey a little easier, and much more fun.
@@ -224,6 +225,8 @@ const { todos } = data;
 We simply return the error or a loading placeholder and destructure our todos out of the data.
 
 Fire it up! But all that work just to render a todo list? Just wait, there is more. On to mutations over in `client/src/Todo.js`. As always some [documentation][mutations] on mutations is in order. First we will implement updating our `completed` field. Just as with our query a couple imports:
+
+[mutations]: https://www.apollographql.com/docs/react/data/mutations/
 
 ```js
 /* client/src/Todo.js */
@@ -423,7 +426,7 @@ const [deleteTodo] = useMutation(DELETE_TODO, {
 
 This is my preferred method of deletion in this case, as the sole purpose of `cache.evict()` is to do just that. We supply the ref (or you can use `cache.identify()`) and cache.evict() _boops_ it. Then we call the `gc()` to make sure everything is right in the world.
 
-Note the lack of useState or useEffect in all of the above queries/mutations. While it is probably some sort of reactjs heresy apollo does a fantastic job of managing state by its lonesome (a little credit should go to postgres/postgraphile). In fact with apollo client 3 local state can be integrated into the apollo cache so that it can act as a true global state management solution. Pretty neat stuff and certainly worth taking the time to explore.
+Note the lack of useState or useEffect in all of the above queries/mutations. While it is probably some sort of reactjs heresy apollo does a fantastic job of managing state by its lonesome. In fact with apollo client 3 local state can be integrated into the apollo cache so that it can act as a true global state management solution. Pretty neat stuff and certainly worth taking the time to explore.
 
 And thats all folks. Our todo list operates as it should...
 
@@ -448,12 +451,14 @@ Before we start with subscriptions I have decided I would rearrange my code todo
 
 Apollo Client's `inMemoryCache` takes an optional `TypePolicy` object that allows for the definition of a [field policy][fieldpolicy]. The documentation is excellent on the subject so I will only say that we can define the default behavior of the cache as it pertains to merges(writing), reads(querying), and keys(identifying). We are concerned primarily with merges on our `todos` array so our `TypePolicy` will look like this:
 
+[fieldpolicy]: https://www.apollographql.com/docs/react/caching/cache-field-behavior/
+
 ```js
 /* client/src/index.js*/
 ...
 
 const client = new ApolloClient({
-  uri: 'http://127.0.0.1:3333/graphql' /* variables from toplevel project .env */,
+  uri: 'http://127.0.0.1:4000/graphql' /* variables from toplevel project .env */,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
@@ -500,7 +505,7 @@ We remove our `readQuery` and simply define data as the incoming todo (as an arr
 ...
 
 const client = new ApolloClient({
-  uri: 'http://127.0.0.1:3333/graphql'
+  uri: 'http://127.0.0.1:4000/graphql'
   cache: new InMemoryCache({
     typePolicies: {
       Todo: {
@@ -512,13 +517,13 @@ const client = new ApolloClient({
 ...
 ```
 
-Try it out. We will continue to use `classicIds:true` in for the foreseeable future, but its nice to know we have options. { dataIdFromObject: (object) => object.nodeId }
+Try it out. We will continue to use `classicIds:true` in for the foreseeable future, but its nice to know we have options.
 
 P.S. Here's another (option for renaming...)
 
 ```js
 const client = new ApolloClient({
-  uri: 'http://127.0.0.1:3333/graphql'
+  uri: 'http://127.0.0.1:4000/graphql'
   cache: new InMemoryCache({
     dataIdFromObject(responseObject) {
       switch (responseObject.__typename) {

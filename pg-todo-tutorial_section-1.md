@@ -1,11 +1,11 @@
 # Postgres and Graphql: Structure for Everyone
-  
-  **TL;DR** The structured nature of [Postgres][postgres] (A relational database mangement system) allows [Postgraphile][postgraphile] to generate a wonderful interface to [Graphql][graphql]. [Project Source at Github][source]
-  
-  [source]:<https://github.com/dkkloimwieder/pg-todo-tutorial>
-  [postgres]:<https://www.postgresql.org/>
-  [postgraphile]:<https://www.graphile.org/postgraphile/>
-  [graphql]:<https://graphql.org/>
+
+**TL;DR** The structured nature of [Postgres][postgres] (A relational database mangement system) allows [Postgraphile][postgraphile] to generate a wonderful interface to [Graphql][graphql]. [Project Source at Github][source]
+
+[source]: https://github.com/dkkloimwieder/pg-todo-tutorial
+[postgres]: https://www.postgresql.org/
+[postgraphile]: https://www.graphile.org/postgraphile/
+[graphql]: https://graphql.org/
 
 ## Why Postgres and Graphql?
 
@@ -17,16 +17,16 @@ This project will provide a brief overview of the underlying tools used to conne
 
 This project requires a basic working knowledge of [Git][git], [Node][node], and a local install of [Docker][docker] with [Docker-Compose][docker-compose] for creating an isolated Postgres database. Please refer to the official documentation for installation as it varies by operating system and is outside the scope of this tutorial. If you would prefer to use a local installation of Postgres this tutorial will still apply; skip the the docker-compose configuration and adjust the provided .env as neccesary. The corresponding [repo][source] is divided into branches in case you would like to start with a relatively clean slate or jump ahead.
 
-[git]:<https://git-scm.com/>
-[node]:<https://nodejs.org/en/>
-[docker]:<https://www.docker.com/>
-[docker-compose]:<https://docs.docker.com/compose/>
+[git]: https://git-scm.com/
+[node]: https://nodejs.org/en/
+[docker]: https://www.docker.com/
+[docker-compose]: https://docs.docker.com/compose/
 
 ## Create a Postgres instance
 
-This section begins with the `section-1` branch and includes a little directory structure, a `.env`, `database.json`, and a `docker-config.yml`. Let's begin: `git checkout section-1`
+This section begins with the `section-1` branch and includes a little directory structure, a `.local_env`, `database.json`, and a `docker-config.yml`. Let's begin: `git checkout section-1`
 
->Note: In the root directory of the project first please have a look at the provided `.env` file.  Please note that typically `.env` would ==**never**== be included in a public git repository. Its purpose is to provide a central place for environemtal variables which may or may not be super secret stuff like passwords or connection settings. Please make sure to add `.env` to your local .gitignore before proceeding: ` echo '.env' >> .gitignore `
+> Note: In the root directory of the project first please have a look at the provided `.env_example` file. You will want to copy it to your a local `.env`. Its purpose is to provide a central place for environemtal variables which may or may not be super secret stuff like passwords or connection settings. Please make sure to add `.env` to your local .gitignore before proceeding: `echo '.env' >> .gitignore`
 
 Let's take a look at the `.env`. The first three lines will be used by docker-compose to configure the new postgres instance with a required user, password and database name:
 
@@ -46,18 +46,18 @@ The two additional lines will be used by `db-migrate`, `postgraphile`, and `expr
 Next lets take a look at out `todo_db/docker-compose.yml`
 
 ```yml
-  version: "3.8"
-  services:
-    postgres:
-      image: "postgres"
-      ports:
-        - "5432:5432"
-      volumes:
-        - todovolume:/var/lib/postgresql/data/
-      env_file:
-        - ../.env
-  volumes:
-    todovolume:
+version: '3.8'
+services:
+  postgres:
+    image: 'postgres'
+    ports:
+      - '5432:5432'
+    volumes:
+      - todovolume:/var/lib/postgresql/data/
+    env_file:
+      - ../.env
+volumes:
+  todovolume:
 ```
 
 This file is responsible for the configuration of `docker-compose`. It specifies that we will use the official `postgres` docker image. `ports` specifies the exposed external port followed by the internal port postgres is using. Specifying `volumes` allows us to persist out database data. The volume will be created the first time that the container is brought up. `env_file` allows us to centralize(for the most part) our environment details. Refer to the [official][docker-compose] documentation if you would like to know more about the structure and specifics of `docker-compose.yml`.
@@ -86,7 +86,7 @@ yarn global add db-migrate
 
 Why do we need `db-migrate`available globally? It is recommended as the method for install by the official documentation as it is primarily used on the command line. It will find the local install when running globally and in fact use it so there are no worries about project specific versioning.
 
-[db-migrate]:<https://db-migrate.readthedocs.io/en/latest/>
+[db-migrate]: https://db-migrate.readthedocs.io/en/latest/
 
 Next lets look at `.db-migraterc`:
 
@@ -103,11 +103,11 @@ Now lets take a look at `database.json`:
 {
   "dev": {
     "driver": "pg",
-    "user": {"ENV": "POSTGRES_USER"},
-    "password": {"ENV": "POSTGRES_PASSWORD"},
-    "host": {"ENV": "POSTGRES_HOST"},
-    "database": {"ENV": "POSTGRES_DB"},
-    "port": {"ENV": "POSTGRES_PORT"}
+    "user": { "ENV": "POSTGRES_USER" },
+    "password": { "ENV": "POSTGRES_PASSWORD" },
+    "host": { "ENV": "POSTGRES_HOST" },
+    "database": { "ENV": "POSTGRES_DB" },
+    "port": { "ENV": "POSTGRES_PORT" }
   }
 }
 ```
@@ -130,13 +130,13 @@ CREATE SCHEMA IF NOT EXISTS todo_public;
 
 and now a corresponding down migrationg in `##############-create-schema-down.sql`
 
-  ```SQL
-  DROP SCHEMA todo_public;
-  ```
+```SQL
+DROP SCHEMA todo_public;
+```
 
 So what's going on here? If you have not seen too much sql and it appears its yelling at you with a harsh tone of capitalization, do not worry, that is just a formality. SQL is case insensitive so often times it increases readability if SQL keywords are capitalized. Feel free to use all lowercase everything if you prefer. Why do we need to migrations? For everything we do to modify the database, we want to be able to easily revert our changes. This practice is somewhat [contested][stackoverflow-migration], although I tend to like it, especially during projects like this which are primarily for experimentation.
 
-[stackoverflow-migration]:<https://nickcraver.com/blog/2016/05/03/stack-overflow-how-we-do-deployment-2016-edition/#database-migrations>
+[stackoverflow-migration]: https://nickcraver.com/blog/2016/05/03/stack-overflow-how-we-do-deployment-2016-edition/#database-migrations
 
 Now lets run the first migration: `db-migrate up`
 
@@ -166,5 +166,3 @@ DROP TABLE todo_public.todo;
 The down migrations simply drops the table.
 
 `db-migrate up` and we are off to the next section.
-
-
