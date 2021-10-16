@@ -5,40 +5,7 @@ import { useMutation } from '@apollo/client';
 export default function Todo({ id, task, completed }) {
   const [updateCompleted] = useMutation(UPDATE_COMPLETED);
 
-  const [deleteTodo] = useMutation(DELETE_TODO, {
-    update: (cache, mutationResult) => {
-      cache.evict({
-        id: `Todo:${mutationResult.data.deleteTodoById.deletedTodoId}`,
-      });
-      cache.gc();
-    },
-  });
-  /*const { todos } = cache.readQuery({ query: GET_TODOS });
-      cache.writeQuery({
-        query: GET_TODOS,
-        data: {
-          todos: todos.filter(
-            (todo) =>
-              todo.id !== mutationResult.data.deleteTodoById.deletedTodoId
-          ),
-        },
-      })
-
-      cache.modify({
-        id: 'ROOT_QUERY',
-        fields: {
-          todos(existingRefs) {
-            return existingRefs.filter(
-              (todo) =>
-                todo.__ref !==
-                `Todo:${mutationResult.data.deleteTodoById.deletedTodoId}`
-            );
-          },
-        },
-      });
-      cache.gc();
-    },
-  });*/
+  const [deleteTodo] = useMutation(DELETE_TODO);
 
   const handleDeleteClick = async (id) => {
     try {

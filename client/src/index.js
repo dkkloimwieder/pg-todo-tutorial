@@ -42,9 +42,7 @@ const client = new ApolloClient({
       Query: {
         fields: {
           todos: {
-            merge(existing = [], incoming) {
-              return [...existing, ...incoming];
-            },
+            merge: false,
           },
         },
       },

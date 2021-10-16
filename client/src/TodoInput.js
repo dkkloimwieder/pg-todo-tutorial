@@ -1,20 +1,10 @@
 import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
-import { GET_TODOS, CREATE_TODO } from './graphql';
+import { CREATE_TODO } from './graphql';
 
 export default function TodoInput() {
   const [input, setInput] = useState('');
-  const [createTodo] = useMutation(CREATE_TODO, {
-    update: (cache, mutationResult) => {
-      //const todosQuery = cache.readQuery({ query: GET_TODOS });
-      cache.writeQuery({
-        query: GET_TODOS,
-        data: {
-          todos: [mutationResult.data.createTodo.todo], //todosQuery.todos.concat(mutationResult.data.createTodo.todo),
-        },
-      });
-    },
-  });
+  const [createTodo] = useMutation(CREATE_TODO);
   return (
     <form
       className="todo-list__form"

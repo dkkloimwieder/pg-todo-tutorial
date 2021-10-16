@@ -30,7 +30,6 @@ export const UPDATE_COMPLETED = gql`
     updateTodoById(input: { patch: { completed: $completed }, id: $id }) {
       todo {
         id
-        completed
       }
     }
   }
@@ -41,6 +40,22 @@ export const DELETE_TODO = gql`
   mutation DeleteTodo($id: ID!) {
     deleteTodoById(input: { id: $id }) {
       deletedTodoId
+    }
+  }
+`;
+
+export const SUBSCRIBE_TODOS = gql`
+  subscription {
+    listen(topic: "todo") {
+      relatedNode {
+        id
+        ... on Todo {
+          task
+          createdAt
+          completed
+        }
+      }
+      relatedNodeId
     }
   }
 `;
