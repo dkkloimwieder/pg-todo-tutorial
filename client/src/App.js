@@ -3,11 +3,11 @@ import TodoInput from './TodoInput';
 import TodoList from './TodoList';
 import './App.css';
 
-export default function App() {
+export default function App(props) {
   return (
     <>
       <TodoInput />
-      <TodoList />
+      <TodoList {...props} />
     </>
   );
 }

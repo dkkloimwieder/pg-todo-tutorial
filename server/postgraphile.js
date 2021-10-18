@@ -26,7 +26,7 @@ module.exports = postgraphile(
     watchPg: true,
     graphiql: true,
     enhanceGraphiql: true,
-    simpleCollections: 'only',
+    simpleCollections: 'both',
     graphileBuildOptions: { pgOmitListSuffix: true },
     classicIds: true,
     pluginHook,

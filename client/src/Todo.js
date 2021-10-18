@@ -25,7 +25,7 @@ export default function Todo({ id, task, completed }) {
   };
 
   return (
-    <div className="todo-list__element">
+    <div key={id} className="todo-list__element">
       <div
         className="todo-list__text"
         style={{ textDecoration: completed ? 'line-through' : 'none' }}

@@ -41,8 +41,30 @@ const client = new ApolloClient({
     typePolicies: {
       Query: {
         fields: {
-          todos: {
-            merge: false,
+          todosConnection: {
+            merge: true,
+          },
+        },
+      },
+      TodosConnection: {
+        fields: {
+          nodes: {
+            merge(incoming, { readField, cache }) {
+              return incoming.map((todo) =>
+                readField('deleted', todo)
+                  ? cache.evict(cache.identify(todo)) && {}
+                  : todo
+              );
+            },
+          },
+        },
+      },
+      Todo: {
+        fields: {
+          deleted: {
+            read(deleted = false) {
+              return deleted;
+            },
           },
         },
       },
