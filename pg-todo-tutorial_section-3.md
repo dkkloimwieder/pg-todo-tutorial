@@ -337,23 +337,68 @@ CREATE OR REPLACE FUNCTION notify_todo_delete()
    END;
    $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_todo
+CREATE TRIGGER trigger_todo_create
     AFTER INSERT
     ON todo_public.todo
     FOR EACH ROW
     EXECUTE PROCEDURE notify_todo_create();
 
-CREATE TRIGGER trigger_todo
+CREATE TRIGGER trigger_todo_update
     AFTER INSERT
     ON todo_public.todo
     FOR EACH ROW
     EXECUTE PROCEDURE notify_todo_update();
 
-CREATE TRIGGER trigger_todo
+CREATE TRIGGER trigger_todo_delete
     AFTER INSERT
     ON todo_public.todo
     FOR EACH ROW
     EXECUTE PROCEDURE notify_todo_delete();
 ```
 
-Whoa! The sql is yelling all the same words over and over. Important to note is that the delete operation requires the use of the `OLD` record that postgres gifts us.
+Whoa! The sql is yelling all the same words over and over. Important to note is that the delete operation requires the use of the `OLD` record that postgres gifts us. If you would like to try this out make sure you have an appropriate corresponding down migration to remove the triggers and functions:
+
+```sql
+--migrations/sqls/#######-trigger-function-todo-down.sql
+
+DROP TRIGGER IF EXISTS trigger_todo_create ON todo_public.todo;
+DROP FUNCTION IF EXISTS notify_todo_create();
+DROP TRIGGER IF EXISTS trigger_todo_update ON todo_public.todo;
+DROP FUNCTION IF EXISTS notify_todo_update();
+DROP TRIGGER IF EXISTS trigger_todo_delete ON todo_public.todo;
+DROP FUNCTION IF EXISTS notify_todo_delete();
+```
+
+If we were to bring up the migration and then graphiql we could now subscribe to three new topics :`createTodo`, `updateTodo`, and `deleteTodo`. We can make the code a litte less repetitive by using some conditional logic to determine which operation we are triggering on and which topic we are subscribing to but for simplicity lets just consolidate our three functions/triggers into one single subscription.
+
+```sql
+-- migrations/sqls/########-trigger-function-todo-up.sql
+
+CREATE OR REPLACE FUNCTION notify_todo()
+  RETURNS trigger AS $$
+  DECLARE
+    todo_record RECORD;
+  BEGIN
+    IF (TG_OP = 'DELETE') THEN
+      todo_record = OLD;
+    ELSE
+      todo_record = NEW;
+    END IF;
+     PERFORM pg_notify(
+         'postgraphile:todo',
+         json_build_object('__node__', json_build_array('todos', todo_record.id))::text);
+    RETURN todo_record;
+
+   END;
+   $$ LANGUAGE plpgsql;
+
+   CREATE TRIGGER trigger_todo
+    AFTER INSERT OR UPDATE OR DELETE
+    ON todo_public.todo
+    FOR EACH ROW
+    EXECUTE PROCEDURE notify_todo();
+```
+
+We now have one single trigger that subscribes us to events on insertions, updates, and deletions. We only have to use `DECLARE` to create a new variable of type `RECORD` and then use it to store either `OLD` or `NEW` depending on the operation. Our corresponding down migration is the same as it was intially and we are off to the races.
+
+Bring up the migration and use graphiql to examine the responses to creating, deleting, and updating the todo list. We will use the differences to appropriately alter out list in our client.
