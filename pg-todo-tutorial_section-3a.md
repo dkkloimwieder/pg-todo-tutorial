@@ -25,8 +25,6 @@ In this section, we will build the frontend of our todo list with React and Apol
 
 [cors]: https://expressjs.com/en/resources/middleware/cors.html
 
-There are also two additional options in `server/postgraphile.js`, `simpleCollections: 'only'` and `graphileBuildOptions: { pgOmitListSuffix: true }`. Feel free to add/subtract these incrementally and then execute queries against them to see what they are up to. `simpleCollections: 'only'` will remove the node/edges structure of the graphql queries. The results are less verbose and leave us with simply `todo` where we would have previously had `node: {todo}`. Our `todos` query becomes `todosList` and so `graphileBuildOptions: { pgOmitListSuffix: true }` removes the list suffix. With the combination of the two options we now get and array of todos from `todos` query. `classicIds: true` replaces `nodeId` with `id` and `id` with `rowId`. This will simplify our life with Apollo a little later as Apollo (appropriately) uses the `id` field to identify and cache our data and in the case of graphql this is actually what we were previously calling `nodeId`. Note that none of these options are specifically neccesary, but enabling them allows our code on the frontend to be a little cleaner. Make sure that you run a few queries and look at the documentation in graphiql before proceeding.
-
 Now, before we dig into the client let's take a moment and explore how we might implement queries with dynamic input in `graphiql` before we start hard coding the queries in `client/src/graphql.js`. In `server/postgraphile.js` we have a couple settings that allow us to continue to experiment in graphiql `graphiql: true` and `enhanceGraphiql: true`. Go ahead and browse to `127.0.0.1:4000/graphiql` (PORT is set in .env and unless you have changed it, will be 4000). In the second column/pane of the graphiql interface lets define a new query which will take a variable as its argument (and note the new `rowId` and `id` fields):
 
 ```gql
@@ -143,9 +141,11 @@ import { gql } from '@apollo/client';
 export const GET_TODOS = gql`
   query GetTodos {
     todos {
-      id
-      task
-      completed
+      nodes {
+        id
+        task
+        completed
+      }
     }
   }
 `;
@@ -219,7 +219,7 @@ Now we can remove the placeholder todo and replace it with a query:
 {error, loading, data} = useQuery(GET_TODOS)
 if (error) return <p className="alert">{error.message}</p>;
 if (loading) return <p className="alert">loading...</p>;
-const { todos } = data;
+const { todos } = data?.nodes;
 ```
 
 We simply return the error or a loading placeholder and destructure our todos out of the data.
@@ -329,7 +329,9 @@ Very much like we can pass an object with a `refetchQueries` property to `useMut
       cache.writeQuery({
         query: GET_TODOS,
         data: {
-          todos: todosQuery.todos.concat(mutationResult.data.createTodo.todo),
+          todos: {
+            nodes: todosQuery.todos.nodes.concat(mutationResult.data.createTodo.todo),
+          }
         },
       });
 ...
@@ -371,9 +373,12 @@ const [deleteTodo] = useMutation(DELETE_TODO, {
     cache.writeQuery({
       query: GET_TODOS,
       data: {
-        todos: todos.filter(
-          (todo) => todo.id !== mutationResult.data.deleteTodoById.deletedTodoId
-        ),
+        todos: {
+          nodes: todos.filter(
+            (todo) =>
+              todo.id !== mutationResult.data.deleteTodoById.deletedTodoId
+          ),
+        },
       },
     });
   },
@@ -390,9 +395,9 @@ But there is another way!
 const [deleteTodo] = useMutation(DELETE_TODO, {
   update: (cache, mutationResult) =>
     cache.modify({
-      id: 'ROOT_QUERY',
+      id: 'todos',
         fields: {
-          todos(existingRefs) {
+          nodes(existingRefs) {
             return existingRefs.filter(
               (todo) =>
                 todo.__ref !== `Todo:${mutationResult.data.deleteTodoById.deletedTodoId}`
@@ -400,12 +405,11 @@ const [deleteTodo] = useMutation(DELETE_TODO, {
           },
         },
     });
-    cache.gc()
 })
 ...
 ```
 
-While `cache.modify` allows us directly modify any part of the cache, it cannot add fields that do not already exist. In this case we only want to remove a todo from our root query, so that is not problematic. Typically one would call cache.identify() to retrieve the id of the object in the cache, but our case is so simple we can just access the root query which holds an array of refs to our todos. The `fields` property contains an object with a modifier function (or functions if we had more than one field we wished to change). Whatever this function returns will replace the existing contents of the cached field. Here we compare the `__ref` property of the todo array with a string that we have build out of our `mutationResult`. Refs in apollo take the form "\_\_typename:id". We can in fact change how the refs are named by apollo, but I find that the existing form is the most useful. Note that had we not changed the `nodeId` to `id` using `classicIds: true` in postgraphile this operation would be slightly more complicated, but not impossible. Finally we call cache.gc() as we have just removed a reference to an object that still sits in the cache (the actual todo), and this will clean it up.
+While `cache.modify` allows us directly modify any part of the cache, it cannot add fields that do not already exist. In this case we only want to remove a todo from our root query, so that is not problematic. Typically one would call cache.identify() to retrieve the id of the object in the cache, but our case is so simple we can just access the root query which holds an array of refs to our todos. The `fields` property contains an object with a modifier function (or functions if we had more than one field we wished to change). Whatever this function returns will replace the existing contents of the cached field. Here we compare the `__ref` property of the todo array with a string that we have build out of our `mutationResult`. Refs in apollo take the form "\_\_typename:id". We can in fact change how the refs are named by apollo, but I find that the existing form is the most useful. Note that had we not changed the `nodeId` to `id` using `classicIds: true` in postgraphile this operation would be slightly more complicated, but not impossible.
 
 And yet another one...
 
@@ -424,7 +428,7 @@ const [deleteTodo] = useMutation(DELETE_TODO, {
 ...
 ```
 
-This is my preferred method of deletion in this case, as the sole purpose of `cache.evict()` is to do just that. We supply the ref (or you can use `cache.identify()`) and cache.evict() _boops_ it. Then we call the `gc()` to make sure everything is right in the world.
+This is my preferred method of deletion in this case, as the sole purpose of `cache.evict()` is to do just that. We supply the ref (or you can use `cache.identify()`) and cache.evict() _boops_ it. Then we call the `gc()` (as per the guidance in the documentation) to make sure everything is right in the world.
 
 Note the lack of useState or useEffect in all of the above queries/mutations. While it is probably some sort of reactjs heresy apollo does a fantastic job of managing state by its lonesome. In fact with apollo client 3 local state can be integrated into the apollo cache so that it can act as a true global state management solution. Pretty neat stuff and certainly worth taking the time to explore.
 
@@ -443,7 +447,9 @@ Before we start with subscriptions I have decided I would rearrange my code todo
       cache.writeQuery({
         query: GET_TODOS,
         data: {
-          todos: todosQuery.todos.concat(mutationResult.data.createTodo.todo),
+          todos: {
+            nodes: todosQuery.todos.concat(mutationResult.data.createTodo.todo),
+          }
         },
       });
 ...
@@ -461,9 +467,9 @@ const client = new ApolloClient({
   uri: 'http://127.0.0.1:4000/graphql' /* variables from toplevel project .env */,
   cache: new InMemoryCache({
     typePolicies: {
-      Query: {
+      todos: {
         fields: {
-          todos: {
+          nodes: {
             merge(existing = [], incoming) {
               return [...existing, ...incoming];
             },
@@ -489,7 +495,9 @@ const [createTodo] = useMutation(CREATE_TODO, {
     cache.writeQuery({
       query: GET_TODOS,
       data: {
-        todos: [mutationResult.data.createTodo.todo],
+        todos: {
+          nodes: [mutationResult.data.createTodo.todo],
+        },
       },
     });
   },
