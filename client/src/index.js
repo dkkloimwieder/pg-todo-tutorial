@@ -39,32 +39,20 @@ const client = new ApolloClient({
   link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
-      Query: {
-        fields: {
-          todosConnection: {
-            merge: true,
-          },
-        },
-      },
       TodosConnection: {
         fields: {
           nodes: {
-            merge(incoming, { readField, cache }) {
-              return incoming.map((todo) =>
-                readField('deleted', todo)
-                  ? cache.evict(cache.identify(todo)) && {}
-                  : todo
-              );
+            merge(existing, incoming) {
+              return incoming;
             },
           },
         },
       },
-      Todo: {
+
+      Query: {
         fields: {
-          deleted: {
-            read(deleted = false) {
-              return deleted;
-            },
+          todos: {
+            merge: true,
           },
         },
       },

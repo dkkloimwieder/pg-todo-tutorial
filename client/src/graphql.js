@@ -3,12 +3,11 @@ import { gql } from '@apollo/client';
 /* get all todos */
 export const GET_TODOS = gql`
   query GetTodos {
-    todosConnection {
+    todos {
       nodes {
-        completed
         id
         task
-        deleted @client
+        completed
       }
     }
   }
@@ -33,7 +32,6 @@ export const UPDATE_COMPLETED = gql`
     updateTodoById(input: { patch: { completed: $completed }, id: $id }) {
       todo {
         id
-        completed
       }
     }
   }
