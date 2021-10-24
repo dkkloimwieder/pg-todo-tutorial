@@ -401,4 +401,155 @@ CREATE OR REPLACE FUNCTION notify_todo()
 
 We now have one single trigger that subscribes us to events on insertions, updates, and deletions. We only have to use `DECLARE` to create a new variable of type `RECORD` and then use it to store either `OLD` or `NEW` depending on the operation. Our corresponding down migration is the same as it was intially and we are off to the races.
 
-Bring up the migration and use graphiql to examine the responses to creating, deleting, and updating the todo list. We will use the differences to appropriately alter out list in our client.
+Bring up the migration and use graphiql to examine the responses to creating, deleting, and updating the todo list. We will use the differences in the responses to appropriately alter our list in the client.
+
+The first thing that we will need is our query in `client/src/graphql.js`:
+
+```js
+...
+
+export const SUBSCRIBE_TODOS = gql`
+  subscription {
+    listen(topic: "todo") {
+      relatedNode {
+        id
+        ... on Todo {
+          task
+          createdAt
+          completed
+        }
+      }
+      relatedNodeId
+    }
+  }
+`;
+```
+
+Next, Apollo Client provides us with two different methods to subscribe to a topic: the `useSubscription` hook and the `subscribtToMore` function that is returned from the `useQuery` hook. We will use the `subscribeToMore` function as we have a query, `GET_TODOS` that already returns all of our todos and the subscription will update that query as it recieves data.
+
+```js
+/* client/src/TodoList.js */
+
+...
+
+/* appropriate imports */
+import { GET_TODOS, SUBSCRIBE_TODOS } from './graphql';
+
+export default function TodoList() {
+  /* useQuery provides us with the subscribeToMore function in the results object */
+  const { subscribeToMore, data, error, loading } = useQuery(GET_TODOS);
+
+/* and now we can just call it inside useEffect() */
+
+React.useEffect(() => {
+    subscribeToMore({
+      document: SUBSCRIBE_TODOS,
+      updateQuery: (prev, { subscriptionData }) => {
+        console.log(prev, subscriptionData);
+        if (!subscriptionData.data) return prev;
+        if (!subscriptionData.data.listen.relatedNode) {
+          return {
+            todos: {
+              nodes: prev.todos.nodes.filter(
+                (todo) => todo.id !== subscriptionData.data.listen.relatedNodeId
+              ),
+            },
+          };
+        } else {
+          let incomingTodo = prev.todos.nodes.find(
+            (todo) =>
+              todo.id === `${subscriptionData.data.listen.relatedNodeId}`
+          );
+          if (incomingTodo) {
+            return {
+              todos: {
+                nodes: prev.todos.nodes.map((todo) =>
+                  todo.id === incomingTodo.id ? { ...incomingTodo } : todo
+                ),
+              },
+            };
+          } else {
+            return {
+              todos: {
+                nodes: [
+                  ...prev.todos.nodes,
+                  {
+                    id: subscriptionData.data.listen.relatedNodeId,
+                    ...subscriptionData.data.listen.relatedNode,
+                  },
+                ],
+              },
+            };
+          }
+        }
+      },
+    });
+  }, [subscribeToMore]);
+
+  ...
+```
+
+`subscribeToMore` takes an object as its sole argument. The object has two properties: `document` and `updateQuery`. The `document` property is the subscription query that we will be subscribing to. The `updateQuery` property is a function that will be called when the subscription recieves data. The function takes two arguments: the previous query result and the subscription data. The subscription data is an object that contains the data that was recieved from the subscription. We essentially have three cases which will allow us to properly update the `GET_TODOS` query. The first is that there is no `relatedNode` returned. This indicates that a deletion has been performed. In this case we will filter out the deleted todo from the `GET_TODOS` query. The second is that there is a `relatedNode` returned and already that node already exists, in which case we update it. The third is that we have a brand new node returned in which case we add it to our list. Note that we are essentially performing a `writeQuery` to the cache, so the syntax is very similar. Also note that we need to check on our `typePolicies` in `client/src/index.js`. The current guidance from Apollo is to hide much of the logic of performing writes and reads to the cache inside of the `typePolicies` object passed to `inMemoryCache`. We are not going that route as deletions actually make the situation a little more complex than it needs to be. For now:
+
+```js
+/* client/src/index.js */
+...
+
+const client = new ApolloClient({
+link: splitLink,
+cache: new InMemoryCache({
+  typePolicies: {
+    TodosConnection: {
+      fields: {
+        nodes: {
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+      },
+    },
+
+    Query: {
+      fields: {
+        todos: {
+          merge: true,
+        },
+      },
+    },
+  },
+}),
+});
+
+...
+```
+
+Our `TodosConnection` type will simply replace the existing nodes with the nodes which we specify in our return, and our `Query` type will merge `TodosConnection` with the existing `TodosConnection`, while respecting the respecting the merge function of the `nodes` field. This is the what `merge: true` accomplishes. We are actually only retaining the `__typename` each time in the merge but it saves a little bit of boilerplate in `subscibeToMore`.
+
+So now we can just our mutations of their explicit cache updates:
+
+```js
+/* client/src/Todo.js */
+...
+
+const [updateCompleted] = useMutation(UPDATE_COMPLETED);
+const [deleteTodo] = useMutation(DELETE_TODO);
+
+...
+```
+
+```js
+/* client/src/TodoInput.js */
+...
+
+const [createTodo] = useMutation(CREATE_TODO);
+
+...
+```
+
+And now we can `yarn start` in the client directory and try our new and improved list...
+
+Seems very much the same!
+
+Now try opening another browser window(or with grpahiql) and making some modifications to the list. You magically get changes in both windows at once.
+
+But aren't we waiting on the round trip to the server and back for our local updates? We are. We can in fact leave out local cache modifcations in place and we pay the penalty of an extra update when we recieve the subscription data, which is a relatively small price to pay. There is not currently an offical way to deal with this. There is good discussion about the topic and the nature of graphql subscriptions on github [here][gh-apollo] and [here][gh-urql].
