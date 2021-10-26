@@ -552,7 +552,7 @@ Seems very much the same!
 
 Now try opening another browser window(or with grpahiql) and making some modifications to the list. You magically get changes in both windows at once.
 
-But aren't we waiting on the round trip to the server and back for our local updates? We are. We can in fact leave out local cache modifcations in place and we pay the penalty of an extra update when we recieve the subscription data, which is a relatively small price to pay. The official way to deal with this is via "live queries" but for now I will just point you to a concise explanation about the topic and the nature of graphql subscriptions on github [here][gh-apollo] and [here][gh-urql].
+But aren't we waiting on the round trip to the server and back for our local updates? We are. We can in fact leave out local cache modifcations in place and we pay the penalty of an extra update when we recieve the subscription data, which is a relatively small price to pay. The official way to deal with this is via "live queries" but for now I will just point you to a concise explanation about the topic and the nature of graphql subscriptions on github [here][gh-apollo] and [here][gh-urql]. We can of course just filter out the updates that have been applied locally. We are doing a little extra work but no rerendering is neccesary.
 
 [gh-apollo]: https://github.com/apollographql/apollo-client/issues/5267
 [gh-urql]: https://github.com/FormidableLabs/urql/discussions/1423
