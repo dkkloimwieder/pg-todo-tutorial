@@ -62,9 +62,9 @@
   integrity sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==
 
 "@types/node@*":
-  version "16.11.10"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.10.tgz#2e3ad0a680d96367103d3e670d41c2fed3da61ae"
-  integrity sha512-3aRnHa1KlOEEhJ6+CvyHKK5vE9BcLGjtUpwvqYLRvYNQKMfabu3BwfJaA/SLW8dxe28LsNDjtHwePTuzn3gmOA==
+  version "16.11.11"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.11.tgz#6ea7342dfb379ea1210835bada87b3c512120234"
+  integrity sha512-KB0sixD67CeecHC33MYn+eYARkqTheIRNuu97y2XMjR7Wu3XibO1vaY6VBV6O/a89SPI81cEUIYT87UqUWlZNw==
 
 "@types/pg@>=6 <9":
   version "8.6.1"
@@ -1415,9 +1415,9 @@ postgraphile-core@4.12.2:
     tslib "^2.0.1"
 
 postgraphile@^4.12.4:
-  version "4.12.5"
-  resolved "https://registry.yarnpkg.com/postgraphile/-/postgraphile-4.12.5.tgz#269c07d6ac30c23260a05e12653253851507b230"
-  integrity sha512-4KLEv4IV8ROhzc6Qb6rpzXuCEs/ifIf9mZlq99sB00T7OWYax7PqfDHXPlpnI0SZNYG2YYFWJu0A0sWQY3Ty/A==
+  version "4.12.6"
+  resolved "https://registry.yarnpkg.com/postgraphile/-/postgraphile-4.12.6.tgz#99b1e51b578c640adc668998309aa38f7fe19f06"
+  integrity sha512-+XfcGKYFcM785U247nRQVkJqLIuFq5AZ1HfZ2VAN2iAEKFiIX8NxivRjnXe3OG2hk1rkP75tfFAAqy03m37FRg==
   dependencies:
     "@graphile/lru" "4.11.0"
     "@types/json5" "^0.0.30"
