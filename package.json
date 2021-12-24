@@ -22,5 +22,9 @@
   "scripts": {
     "start": "node server/index.js",
     "watch": "nodemon server/index.js"
+  },
+  "peerDependencies": {
+    "graphile-build": "^4.12.2",
+    "graphql": "^16.1.0"
   }
 }
