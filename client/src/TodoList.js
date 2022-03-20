@@ -15,30 +15,30 @@ export default function TodoList() {
         if (!subscriptionData.data) return prev;
         if (!subscriptionData.data.listen.relatedNode) {
           return {
-            todos: {
-              nodes: prev.todos.nodes.filter(
+            todosConnection: {
+              nodes: prev.todosConnection.nodes.filter(
                 (todo) => todo.id !== subscriptionData.data.listen.relatedNodeId
               ),
             },
           };
         } else {
-          let incomingTodo = prev.todos.nodes.find(
+          let incomingTodo = prev.todosConnection.nodes.find(
             (todo) =>
               todo.id === `${subscriptionData.data.listen.relatedNodeId}`
           );
           if (incomingTodo) {
             return {
-              todos: {
-                nodes: prev.todos.nodes.map((todo) =>
+              todosConnection: {
+                nodes: prev.todosConnection.nodes.map((todo) =>
                   todo.id === incomingTodo.id ? { ...incomingTodo } : todo
                 ),
               },
             };
           } else {
             return {
-              todos: {
+              todosConnection: {
                 nodes: [
-                  ...prev.todos.nodes,
+                  ...prev.todosConnection.nodes,
                   {
                     id: subscriptionData.data.listen.relatedNodeId,
                     ...subscriptionData.data.listen.relatedNode,
@@ -54,7 +54,7 @@ export default function TodoList() {
 
   if (loading) return <h1>loading</h1>;
   if (error) return <h1>error</h1>;
-  const { nodes } = data?.todos;
+  const { nodes } = data?.todosConnection;
   return (
     <div className="todo-list">
       {nodes.map((todo) => {

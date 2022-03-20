@@ -3,7 +3,7 @@ import { gql } from '@apollo/client';
 /* get all todos */
 export const GET_TODOS = gql`
   query GetTodos {
-    todos {
+    todosConnection {
       nodes {
         id
         task
