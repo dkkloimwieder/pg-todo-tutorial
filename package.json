@@ -7,17 +7,17 @@
   "author": "d kloimwieder <dkkloimwieder@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
-    "@graphile/pg-pubsub": "^4.12.1",
+    "@graphile-contrib/pg-simplify-inflector": "^7.0.0-alpha.1",
+    "@graphile/pg-pubsub": "^4.12.2",
     "cors": "^2.8.5",
-    "db-migrate": "^1.0.0-beta.16",
+    "db-migrate": "^1.0.0-beta.18",
     "db-migrate-pg": "^1.2.2",
-    "express": "^4.17.1",
-    "postgraphile": "^4.12.4"
+    "express": "^5.0.0-beta.1",
+    "postgraphile": "^4.12.10"
   },
   "devDependencies": {
-    "dotenv": "^10.0.0",
-    "nodemon": "^2.0.13"
+    "dotenv": "^16.0.1",
+    "nodemon": "^2.0.16"
   },
   "scripts": {
     "start": "node server/index.js",
